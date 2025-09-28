@@ -1,8 +1,10 @@
+"use client"
 import React from "react";
-import { Button } from "../ui/button";
+
+// Update the import path below if your Button component is located elsewhere
+import { Button } from "../../ui/button";
 import { useAuthActions } from "@convex-dev/auth/react";
-type Props = {};
-const Google = (props: Props) => {
+const Google = () => {
     const { signIn } = useAuthActions()
     return (
         <Button
