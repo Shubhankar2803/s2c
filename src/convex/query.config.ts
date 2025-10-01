@@ -1,30 +1,64 @@
-import {  preloadQuery } from "convex/nextjs"
+import { preloadQuery } from "convex/nextjs"
 import { convexAuthNextjsToken } from "@convex-dev/auth/nextjs/server"
 import { api } from "../../convex/_generated/api"
 import { ConvexUserRaw, normalizeProfile } from "@/types/user"
 import { Id } from "../../convex/_generated/dataModel"
 
-export const ProfileQuery=async()=>{
+export const ProfileQuery = async () => {
 
     return await preloadQuery(
-        api.user.getCurrentUser,{},
-        {token:await convexAuthNextjsToken()}
+        api.user.getCurrentUser, {},
+        { token: await convexAuthNextjsToken() }
     )
 }
 
 
-export const SubscriptionEntitleMentQuery=async()=>{
-    const rawProfile=await ProfileQuery()
-    const profile=normalizeProfile(rawProfile._valueJSON as unknown as ConvexUserRaw | null)
-    const entitlement=await preloadQuery(
+export const SubscriptionEntitleMentQuery = async () => {
+    const rawProfile = await ProfileQuery()
+    const profile = normalizeProfile(rawProfile._valueJSON as unknown as ConvexUserRaw | null)
+    const entitlement = await preloadQuery(
         api.subscription.hasEntitlement,
         {
-            userId:profile?.id as Id<'users'>
+            userId: profile?.id as Id<'users'>
         },
-        {token:await convexAuthNextjsToken()}
+        { token: await convexAuthNextjsToken() }
     )
-    return {entitlement,profileName:profile?.name}
+    return { entitlement, profileName: profile?.name }
 
+
+
+}
+
+export const ProjectsQuery = async () => {
+    const rawProfile = await ProfileQuery()
+    const profile = normalizeProfile(rawProfile._valueJSON as unknown as ConvexUserRaw | null)
+    if (!profile) return { prpjects: null, profile: null }
+
+    const projects = await preloadQuery(
+        api.projects.getUserProjects,
+        { userId: profile.id as Id<'users'> }
+        ,
+        { token: await convexAuthNextjsToken() }
+    )
+    return { projects, profile }
+}
+
+export const StyleGuideQuery = async (projectId: string) => {
+    const styleGuide = await preloadQuery(
+        api.projects.getProjectStyleGuide,
+        { projectId: projectId as Id<'projects'> },
+        { token: await convexAuthNextjsToken() }
+    )
+    return { styleGuide }
+}
+
+export const MoodBoardImagesQuery = async (projectId: string) => {
+    const images = await preloadQuery(
+        api.moodboard.getMoodBoardImages,
+        { projectId: projectId as Id<'projects'> },
+        { token: await convexAuthNextjsToken() })
+
+    return { images }
 
 
 }
