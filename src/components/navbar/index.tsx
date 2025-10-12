@@ -10,6 +10,7 @@ import { Button } from '../ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { useAppSelector } from '@/redux/store'
 import CreateProject from '../buttons/project'
+import Autosave from '../canvas/autosave'
 
 
 type TabProps = {
@@ -48,6 +49,10 @@ const Navbar = () => {
 
     const hasCanvas=pathname.includes('canvas')
     const hasStyleGuide=pathname.includes('style-guide')
+
+    const creditBalance=useQuery(api.subscription.getCreditsBalance,{
+        userId:me.id as Id<'users'>
+    })
     return (
     <div className="grid grid-cols-2 lg:grid-cols-3 p-6 fixed top-0 left-0 right-0
        z-50">
@@ -101,7 +106,7 @@ const Navbar = () => {
              </div>
        </div>
        <div className='flex items-center gap-4 justify-end'>
-        <span className='text-sm text-white/50 '>TODO: CREDITS</span>
+        <span className='text-sm text-white/50 '>{creditBalance} Credits</span>
         <Button 
           variant="secondary"
           className='rounded-full h-12 w-12 fle x items-center justify-center backdrop-blur-xl bg-white/[0.08] 
@@ -117,10 +122,10 @@ const Navbar = () => {
                 <User className='size-5 text-black' />
             </AvatarFallback>
            {/* {hasCanvas&&<Autosave />} */}
-          {!hasCanvas&&!hasStyleGuide&&<CreateProject />} 
 
 
         </Avatar>
+        {hasCanvas&&<Autosave />}
         {!hasCanvas && !hasStyleGuide && <CreateProject />}
 
 

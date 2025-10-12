@@ -134,3 +134,49 @@ export const getProjectStyleGuide = query({
     },
 })
 
+
+export const updateProjectSketches = mutation({
+    args: {
+        projectId: v.id('projects'),
+        sketchesData: v.any(),
+        viewportData: v.optional(v.any())
+    },
+    handler: async (ctx, { projectId, sketchesData, viewportData }) => {
+        const project = await ctx.db.get(projectId)
+        if (!project) throw new Error('Project not found')
+        const updateData: any = {
+            sketchesData,
+            lastModified: Date.now()
+        }
+        if (viewportData) {
+            updateData.viewportData = viewportData
+        }
+
+        await ctx.db.patch(projectId, updateData)
+        console.log('Project sketches updated:')
+        return { success: true }
+    }
+})
+
+
+export const updateProjectStyleGuide = mutation({
+    args: {
+        projectId: v.id('projects'),
+        styleGuideData: v.any(),
+    },
+
+    handler: async (ctx, { projectId, styleGuideData }) => {
+        console.log('Updating style guide for project:', projectId)
+        const userId = await getAuthUserId(ctx)
+        if (!userId) throw new Error('Not authenticated')
+        const project = await ctx.db.get(projectId)
+        if (!project) throw new Error('Project not found')
+        if (project.userId !== userId) throw new Error('Access denied')
+        await ctx.db.patch(projectId, {
+            styleGuide: JSON.stringify(styleGuideData),
+            lastModified: Date.now()
+        })
+        console.log('Style guide updated for project:', projectId)
+        return { success: true,styleGuide:styleGuideData  }
+    },
+})

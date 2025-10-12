@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation'
 const Page = async () => {
     const {entitlement,profileName}=await SubscriptionEntitleMentQuery() 
     if(!entitlement._valueJSON){
-        redirect(`/dashboard/${combinedSlug(profileName!)}`)
+        redirect(`/billing/${combinedSlug(profileName!)}`)
     } else {
         redirect(`/dashboard/${combinedSlug(profileName!)}`)
     }
