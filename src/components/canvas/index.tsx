@@ -13,6 +13,7 @@ import { FreeDrawStrokePreview } from './shapes/stroke/preview'
 import {SelectionOverlay} from './shapes/selection'
 import Autosave from './autosave'
 import InspirationSidebar from './shapes/inspiration-sidebar'
+import ChatWindow from './shapes/generatedui/chat'
 
 const InfiniteCanvas = () => {
     const {
@@ -33,8 +34,7 @@ const InfiniteCanvas = () => {
 
     const {isInspirationOpen,closeInspiration,toggleInspiration}=useInspiration()
 
-   const {activeGeneratedUUid,generateWorkflow, isChatOpen }=useGlobalChat()
-
+   const {activeGeneratedUUid,generateWorkflow, isChatOpen,exportDesign,toggleChat,closeChat }=useGlobalChat()
 
     const draftShape = getDraftShape()
     const freeDrawPoints = getFreeDrawPoints()
@@ -43,6 +43,14 @@ const InfiniteCanvas = () => {
     return (<>
         <TextSideBar isOpen={isSidebarOpen && hasSelectedText} />
         <InspirationSidebar isOpen={isInspirationOpen} onClose={closeInspiration} />
+
+        {activeGeneratedUUid && (
+            <ChatWindow 
+            generatedUIid={activeGeneratedUUid}
+            isOpen={isChatOpen}
+            onClose={closeChat}
+            />
+        )}
         
         <div className="absolute top-4 right-4 z-50">
             <Autosave />
@@ -90,6 +98,8 @@ const InfiniteCanvas = () => {
                         shape={shape}
                         toggleInspiration={toggleInspiration}
                         generateWorkflow={generateWorkflow}
+                        exportDesign={exportDesign}
+                        toggleChat={toggleChat}
 
                     />
                 ))}

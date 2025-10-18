@@ -1,4 +1,5 @@
 import { FrameShape, Shape } from "@/redux/slice/shapes"
+import { toast } from "sonner"
 
 export const isShapeInsideFrame = (shape: Shape, frame: FrameShape): boolean => {
     const frameLeft = frame.x
@@ -232,5 +233,111 @@ export const downloadBlob = (blob: Blob, filename: string): void => {
     URL.revokeObjectURL(url);
  
     URL.revokeObjectURL(url)
+
+}
+
+export const captureVisualContent=async(
+    ctx:CanvasRenderingContext2D,
+    element:HTMLElement,
+    width:number,
+    height:number
+)=>{
+
+    const {toPng}= await import('html-to-image')
+    const dataUrl=await toPng(element,{
+        width:width,
+        height:height,
+        backgroundColor:'#ffffff',
+        pixelRatio:1,
+        cacheBust:true,
+        includeQueryParams:false,
+        skipAutoScale:true,
+        skipFonts:true,
+        filter:(node)=>{
+            if(node.nodeType===Node.TEXT_NODE) return true
+            if(node.nodeType===Node.ELEMENT_NODE){
+                const element=node as HTMLElement
+                return![
+                    'SCRIPT',
+                    'STYLE',
+                    'BUTTON',
+                    'SELECT',
+                    'INPUT',
+                    'TEXTAREA',
+                ].includes(element.tagName)
+            }
+            return true
+        }
+    })
+
+    const img=new Image()
+
+    await new Promise((ressolve,reject)=>{
+        img.onload=()=>{
+            ctx.drawImage(img,0,0,width,height)
+            console.log('Visual content captured to canvas')
+            ressolve(true)
+        }
+        img.onerror=(error)=>{
+            reject(new Error('Failed to load image for visual content capture'))
+
+        }
+        img.src=dataUrl
+    })
+
+
+
+
+}
+
+export const exportGeneratedUIAsPNG=async (
+    element:HTMLElement,
+    filename:string
+)=>{
+    try {
+        const rect=element.getBoundingClientRect()
+        const canvas=document.createElement('canvas')
+        canvas.width=rect.width
+        canvas.height=rect.height
+        const ctx=canvas.getContext('2d')
+        if(!ctx) {
+            throw new Error('Failed to get canvas context')
+        }
+        ctx.fillStyle='#ffffff'
+        ctx.fillRect(0,0,canvas.width,canvas.height)
+
+        const contentDiv=element.querySelector(
+            'div[style*="pointer-events: auto"]'
+        ) as HTMLElement
+
+        if(contentDiv){
+            console.log('Found content div, rendering to canvas')
+
+            await captureVisualContent(ctx,contentDiv,rect.width,rect.height)
+        } else{
+            throw new Error('Content div not found')
+        }
+
+        canvas.toBlob((blob)=>{
+            if(blob){
+                console.log('Generated UI snapshot blob created',{
+                    size:blob.size,
+                    type:blob.type,
+                    filename
+                })
+                downloadBlob(blob,filename)
+
+            } else{
+                console.log('Failed to create blob from canvas')
+            }
+        },
+        'image/png',1.0)
+
+
+    } catch (error) {
+        toast.error('Failed to export design.')
+        console.error('Failed to export design:', error)
+        throw error
+    }
 
 }

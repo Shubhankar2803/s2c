@@ -1,6 +1,6 @@
 import { ConsumedCreditsQuery, CreditsBalanceQuery, InspirationImagesQuery, StyleGuideQuery } from "@/convex/query.config";
 import { prompts } from "@/prompts";
-import { anthropic } from "@ai-sdk/anthropic";
+import { google } from "@ai-sdk/google";
 import { streamObject, streamText } from "ai";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -102,7 +102,7 @@ On conflicts: the styleGuide always wins over image cues.
       .join(', ')}
     `
     const result=streamText({
-            model:anthropic('claude-sonnet-4-20250514'),
+            model:google('models/gemini-2.5-flash'),
             messages:[
                 {
                     role:'user',

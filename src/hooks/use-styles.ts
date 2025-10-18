@@ -25,10 +25,9 @@ export interface MoodBoardImage {
 interface StylesFormat {
     images: MoodBoardImage[]
 }
-export const useMoodBoard = (guideImages: MoodBoardImage[]) => {
+export const useMoodBoard = (guideImages: MoodBoardImage[], projectId?: string) => {
+    console.log('useMoodBoard called with projectId:', projectId, 'guideImages length:', guideImages?.length)
     const [dragActive, setDragActive] = useState(false)
-    const searchParams = useSearchParams()
-    const projectId = searchParams.get('project')
     const form = useForm<StylesFormat>({
         defaultValues: {
             images: []
@@ -42,6 +41,7 @@ export const useMoodBoard = (guideImages: MoodBoardImage[]) => {
     const addMoodBoardImage = useMutation(api.moodboard.addMoodBoardImage)
 
     const uploadImage = async (file: File): Promise<{ storageId: string; url?: string }> => {
+        console.log('uploadImage called with projectId:', projectId)
         try {
             const uploadUrl = await generateUploadUrl()
             const result = await fetch(uploadUrl, {
@@ -53,11 +53,16 @@ export const useMoodBoard = (guideImages: MoodBoardImage[]) => {
                 throw new Error(`Upload failed:${result.statusText}`)
             }
             const { storageId } = await result.json()
-            if (!projectId) {
+            console.log('Upload successful, storageId:', storageId, 'projectId check:', !!projectId)
+            if (projectId) {
+                console.log('Calling addMoodBoardImage with projectId:', projectId, 'storageId:', storageId)
                 await addMoodBoardImage({
                     projectId: projectId as Id<'projects'>,
                     storageId: storageId as Id<'_storage'>
                 })
+                console.log('addMoodBoardImage completed successfully')
+            } else {
+                console.log('WARNING: projectId is falsy, not saving to database')
             }
             return { storageId }
         } catch (error) {
@@ -200,7 +205,7 @@ export const useMoodBoard = (guideImages: MoodBoardImage[]) => {
             const currentImages = getValues('images')
             for (let i = 0; i < currentImages.length; i++) {
                 const image = currentImages[i]
-                if (!image.uploaded && !image.uploading && image.error) {
+                if (!image.uploaded && !image.uploading && !image.isFromServer) {
                     const updatedImages = [...currentImages]
                     updatedImages[i] = { ...image, uploading: true }
                     setValue('images', updatedImages)
@@ -283,7 +288,10 @@ export const useStyleguide = (
             toast.loading('Analyzing mood board images...', {
                 id: 'style-guide-generation'
             })
+            console.log('About to call generateStyleGuide with projectId:', projectId)
+            console.log('Images count:', images.length)
             const result = await generateStyleGuide({ projectId }).unwrap()
+            console.log('generateStyleGuide result:', result)
             if (!result.success) {
                 toast.error(result.message, {
                     id: 'style-guide-generation'

@@ -1,13 +1,14 @@
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import { useMutation, useQuery } from 'convex/react'
-import { ImageIcon, Trash2, Upload, X } from 'lucide-react'
+import { ImageIcon, Loader2, Plus, Trash2, Upload, X } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
 import React, { useCallback, useEffect, useState } from 'react'
 import { api } from '../../../../../convex/_generated/api'
 import { Id } from '../../../../../convex/_generated/dataModel'
 import { toast } from 'sonner'
+import Image from 'next/image'
 
 type InspirationProps = {
     isOpen: boolean
@@ -55,26 +56,26 @@ const InspirationSidebar = ({ isOpen, onClose }: InspirationProps) => {
     }, [])
 
     const uploadImage = useCallback(
-        async(file:File):Promise<{storageId:string}>=>{
+        async (file: File): Promise<{ storageId: string }> => {
             try {
-                const uploadUrl= await generateUploadUrl()
-                const result =await fetch(uploadUrl,{
-                    method:'POST',
-                    headers:{'Content-Type':file.type},
-                    body:file
+                const uploadUrl = await generateUploadUrl()
+                const result = await fetch(uploadUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': file.type },
+                    body: file
                 })
-                if(!result.ok){
+                if (!result.ok) {
                     throw new Error('Failed to upload image')
                 }
-                const {storageId}= await result.json()
+                const { storageId } = await result.json()
 
-                if(projectId){
+                if (projectId) {
                     await addInspirationImageMutation({
-                        projectId:projectId as Id<'projects'>,
-                        storageId:storageId as Id<'_storage'>
+                        projectId: projectId as Id<'projects'>,
+                        storageId: storageId as Id<'_storage'>
                     })
                 }
-                return {storageId}
+                return { storageId }
 
             } catch (error) {
                 console.error(error)
@@ -84,7 +85,7 @@ const InspirationSidebar = ({ isOpen, onClose }: InspirationProps) => {
                 throw new Error('Failed to upload image')
             }
 
-        },[projectId,generateUploadUrl,addInspirationImageMutation]
+        }, [projectId, generateUploadUrl, addInspirationImageMutation]
     )
 
     const handleFileSelect = useCallback((files: FileList | null) => {
@@ -100,28 +101,28 @@ const InspirationSidebar = ({ isOpen, onClose }: InspirationProps) => {
                 uploaded: false,
                 uploading: false,
             }))
-            if(newImages.length >0){
-                setImages((prev) => [...prev, ...newImages])
-                newImages.forEach(async (image) => {
+        if (newImages.length > 0) {
+            setImages((prev) => [...prev, ...newImages])
+            newImages.forEach(async (image) => {
+                setImages((prev) =>
+                    prev.map((img) => img.id === image.id ? { ...img, uploading: true } : img
+                    )
+                )
+                try {
+                    const { storageId } = await uploadImage(image.file!)
                     setImages((prev) =>
-                        prev.map((img) => img.id === image.id ?{...img, uploading: true } : img
+                        prev.map((img) => img.id === image.id ? { ...img, uploaded: true, uploading: false, storageId, isFromServer: true } : img
+                        )
                     )
+                } catch (error) {
+                    console.error('Upload failed:', error)
+                    setImages((prev) =>
+                        prev.map((img) => img.id === image.id ? { ...img, uploading: false, error: 'Upload failed' } : img
+                        )
                     )
-                    try {
-                        const {storageId}= await uploadImage(image.file!)
-                        setImages((prev) =>
-                            prev.map((img) => img.id === image.id ?{...img, uploaded: true, uploading: false, storageId,isFromServer:true } : img
-                        )
-                        )
-                    } catch (error) {
-                        console.error('Upload failed:', error)
-                        setImages((prev) =>
-                            prev.map((img) => img.id === image.id ?{...img, uploading: false, error: 'Upload failed' } : img
-                        )
-                        )
-                    }
-                })
-            }
+                }
+            })
+        }
     }, [images.length, uploadImage])
 
 
@@ -162,23 +163,43 @@ const InspirationSidebar = ({ isOpen, onClose }: InspirationProps) => {
     }, [existingImages])
 
     const clearAllImages = async () => {
-        const imagesToRemove= images.filter(
+        const imagesToRemove = images.filter(
             (img) => img.storageId && img.isFromServer
         )
 
-        for (const image of imagesToRemove){
-            if(projectId && image.storageId){
+        for (const image of imagesToRemove) {
+            if (projectId && image.storageId) {
                 try {
                     await removeInspirationImage({
-                        projectId:projectId as Id<'projects'>,
-                        storageId:image.storageId as Id<'_storage'>
+                        projectId: projectId as Id<'projects'>,
+                        storageId: image.storageId as Id<'_storage'>
                     })
                 } catch (error) {
-                    
+
                 }
             }
         }
         setImages([])
+    }
+
+    const removeImage = async (imageId: string) => {
+        const imageToRemove = images.find((img) => img.id === imageId)
+        if (!imageToRemove) return
+        if (imageToRemove.storageId && imageToRemove.isFromServer && projectId) {
+            try {
+                await removeInspirationImage({
+                    projectId: projectId as Id<'projects'>,
+                    storageId: imageToRemove.storageId as Id<'_storage'>
+                })
+            } catch (error) {
+                toast.error('Failed to remove image from server')
+                console.error('Error removing image from server:', error)
+            }
+        }
+
+        setImages((prev) => prev.filter((img) => img.id !== imageId))
+
+
     }
 
 
@@ -228,14 +249,14 @@ const InspirationSidebar = ({ isOpen, onClose }: InspirationProps) => {
                 <Upload className='w-5 h-5 text-white/80' />
                 <p className="text-sm text-white/60">
                     {images.length < 6 ? (
-                    <>
-                        Drop images here or{' '}
-                        <span className="[text-blue-400">browse</span>
-                        <br />
-                        <span className="text-xs [text-white/40">
-                            {/* {images.length}/6 images uploaded */}
-                        </span>
-                    </>
+                        <>
+                            Drop images here or{' '}
+                            <span className="[text-blue-400">browse</span>
+                            <br />
+                            <span className="text-xs [text-white/40">
+                                {/* {images.length}/6 images uploaded */}
+                            </span>
+                        </>
                     ) : (
                         'Maximum 6 images reached'
                     )}
@@ -264,6 +285,60 @@ const InspirationSidebar = ({ isOpen, onClose }: InspirationProps) => {
                         <Trash2 className="w-3 h-3 mr-1" />
                         Clear All
                     </Button>
+                </div>
+                <div className='grid grid-cols-2 gap-2'>
+                    {images.map((img) => (
+                        <div key={img.id}
+                            className='relative group aspect-square rounded-lg overflow-hidden
+                         border border-white/10 bg-white/5'>
+                            <Image
+                                src={img.url || ''}
+                                alt='Inspiration'
+                                className='w-full h-full object-cover'
+                                width={100}
+                                height={100}
+                            />
+                            {img.uploading && (
+                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                    <Loader2 className="w-6 h-6 text-white animate-spin" />
+                                </div>)}
+
+                            {img.error && (
+                                <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center">
+                                    <p className="text-xs [text-red-300 text-center px-2">
+                                        {img.error}
+                                    </p>
+                                </div>)}
+
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeImage(img.id)}
+                                className="absolute top-1 right-1 h-6 w-6 p-0 bg-black/50 hover:bg-black/70 opacity-0
+group-hover: opacity-100 transition-opacity">
+
+                                <X className="w-3 h-3 text-white" />
+                            </Button>
+
+                            {img.uploaded && !img.uploading && (
+                                <div className="absolute bottom-1 right-1 w-3 h-3 bg-green-500 rounded-full border border-white/20" ></div>
+                            )}
+
+
+
+                        </div>
+                    ))}
+
+                    {images.length < 6 && (
+                        <button
+                            onClick={() => fileInputRef.current?.click()}
+                            className="aspect-square rounded-lg border-2 border-dashed border-white/20 bg-white/5
+hover:border-white/40 hover:bg-white/10 transition-all duration-200 flex items-center
+justify-center group" >
+                            <Plus className="w-4 h-4 text-white" />
+                        </button>
+                    )}
+
                 </div>
 
             </div>

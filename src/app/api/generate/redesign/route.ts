@@ -1,11 +1,11 @@
-import { anthropic } from "@ai-sdk/anthropic";
+import { google } from "@ai-sdk/google";
 import { streamText } from "ai";
 import { ConsumedCreditsQuery, CreditsBalanceQuery, StyleGuideQuery, InspirationImagesQuery } from "@/convex/query.config";
 import { prompts } from "@/prompts";
 import { NextResponse, NextRequest } from "next/server";
 
 
-export async function POST(request: NextResponse) {
+export async function POST(request: NextRequest) {
     try {
         const body = await request.json()
         const { userMessage, generatedUUid, currentHTML, projectId, wireframeSnapshot } = body
@@ -139,7 +139,7 @@ understanding.`
 
 
         const result = streamText({
-            model: anthropic('claude-opus-4-20250514'),
+            model: google('models/gemini-2.5-flash'),
             messages: [
                 {
 
@@ -189,7 +189,7 @@ understanding.`
                 'Content-Type': 'text/html; charset=utf-8',
                 'Cache-Control': 'no-cache',
                 Connection: 'keep-alive',
-            }
+            } 
         })
 
 

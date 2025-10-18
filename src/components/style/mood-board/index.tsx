@@ -10,13 +10,12 @@ import { useSearchParams } from 'next/navigation'
 import GenerateStyleGuideButton from '@/components/buttons/style-guide'
 type Props = {
     guidedImages: MoodBoardImage[]
+    projectId: string
 }
 
-const MoodBoard = ({ guidedImages }: Props) => {
-    const { images, dragActive, handleDrag, handleDrop, handleFileInput, canAddMore, removeImage } = useMoodBoard(guidedImages)
-    const searchParams=useSearchParams()
-    const projectId=searchParams.get('project')
-  const fileInputRef=useRef<HTMLInputElement>(null)
+const MoodBoard = ({ guidedImages, projectId }: Props) => {
+    const { images, dragActive, handleDrag, handleDrop, handleFileInput, canAddMore, removeImage } = useMoodBoard(guidedImages, projectId)
+    const fileInputRef=useRef<HTMLInputElement>(null)
   const handleUploadClick=()=>{
     fileInputRef.current?.click()
   }

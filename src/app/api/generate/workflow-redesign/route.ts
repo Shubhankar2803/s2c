@@ -1,4 +1,4 @@
-import { anthropic } from "@ai-sdk/anthropic";
+import { google } from "@ai-sdk/google";
 import { streamText } from "ai";
 import { ConsumedCreditsQuery, CreditsBalanceQuery, StyleGuideQuery } from "@/convex/query.config";
 import { prompts } from "@/prompts";
@@ -101,7 +101,7 @@ Please generate the modified version of the provided workflow page HTML with the
 
 
       const result = streamText({
-                 model: anthropic('claude-opus-4-20250514'),
+                 model: google('models/gemini-2.5-flash'),
                  messages: [
                      {
      

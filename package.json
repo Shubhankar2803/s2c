@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.6",
+    "@ai-sdk/google": "^2.0.23",
     "@auth/core": "^0.37.0",
     "@convex-dev/auth": "^0.0.88",
     "@hookform/resolvers": "^5.2.2",
@@ -49,6 +50,7 @@
     "convex": "^1.25.4",
     "date-fns": "^4.1.0",
     "embla-carousel-react": "^8.6.0",
+    "html-to-image": "^1.11.13",
     "inngest": "^3.40.1",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.544.0",

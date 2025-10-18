@@ -55,7 +55,7 @@ const page = async ({ searchParams }: Props) => {
                 <StyleGuideTypography typographyGuide={typographyGuide} />
             </TabsContent>
             <TabsContent value='moodboard'>
-                <MoodBoard guidedImages={guideImages} />
+                <MoodBoard guidedImages={guideImages} projectId={projectId} />
             </TabsContent>
 
 
